@@ -1,0 +1,10 @@
+{
+	"name": "ComfyFactorio",
+	"version": "1.0.0",
+	"title": "comfyfactorio scenarios",
+	"author": "comfy",
+	"dependencies": ["base >= 1.1"],
+	"description": "heavy breathing - select map in Mod Settings -> Map (DON'T CHANGE DURING GAME)",
+	"factorio_version": "1.1",
+	"homepage":"https://github.com/M3wM3w/ComfyFactorio"
+}

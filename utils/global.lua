@@ -12,7 +12,12 @@ function Global.register(tbl, callback)
         error('can only be called during the control stage', 2)
     end
 
-    local filepath = debug.getinfo(2, 'S').source:match('^.+/currently%-playing/(.+)$'):sub(1, -5)
+	local source = debug.getinfo(2, 'S').source
+	local source_match = string.match(source, ('^.+/currently%-playing/(.+)$'))
+	if not source_match then
+		source_match = string.match(source,'^@__ComfyFactorio__/(.+)$')
+	end
+    local filepath = string.sub(source_match, 1, -5)
     local token = Token.register_global(tbl)
 
     names[token] = concat {token, ' - ', filepath}
