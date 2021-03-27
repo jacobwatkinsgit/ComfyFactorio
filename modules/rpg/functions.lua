@@ -535,6 +535,7 @@ function Public.rpg_reset_player(player, one_time_reset)
             dropdown_select_index3 = 1,
             allocate_index = 1,
             flame_boots = false,
+            explosive_bullets = false,
             enable_entity_spawn = false,
             health_bar = rpg_t[player.index].health_bar,
             mana_bar = rpg_t[player.index].mana_bar,
@@ -570,6 +571,7 @@ function Public.rpg_reset_player(player, one_time_reset)
             dropdown_select_index3 = 1,
             allocate_index = 1,
             flame_boots = false,
+            explosive_bullets = false,
             enable_entity_spawn = false,
             points_to_distribute = 0,
             last_floaty_text = visuals_delay,
@@ -646,6 +648,14 @@ function Public.gain_xp(player, amount, added_to_pool, text)
 
     if not experience_levels[rpg_t[player.index].level + 1] then
         return
+    end
+
+    local f = player.gui.screen[main_frame_name]
+    if f and f.valid then
+        local d = Gui.get_data(f)
+        if d.exp_gui and d.exp_gui.valid then
+            d.exp_gui.caption = math.floor(rpg_t[player.index].xp)
+        end
     end
 
     if rpg_t[player.index].xp >= experience_levels[rpg_t[player.index].level + 1] then

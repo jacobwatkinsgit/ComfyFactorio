@@ -177,21 +177,28 @@ local function get_spawn_pos()
 
     ::retry::
 
-    local position = WD.get('spawn_position')
+    local initial_position = WD.get('spawn_position')
 
-    position = find_initial_spot(surface, position)
-    position = surface.find_non_colliding_position('behemoth-biter', position, 32, 1)
-    -- local x = position.x
-    -- local y = position.y
-    -- game.print('[gps=' .. x .. ',' .. y .. ',' .. surface.name .. ']')
-    if not position then
+    local located_position = find_initial_spot(surface, initial_position)
+    local valid_position = surface.find_non_colliding_position('behemoth-biter', located_position, 32, 1)
+    local debug = WD.get('debug')
+    if debug then
+        if valid_position then
+            local x = valid_position.x
+            local y = valid_position.y
+            game.print('[gps=' .. x .. ',' .. y .. ',' .. surface.name .. ']')
+        end
+    end
+
+    if not valid_position then
         local remove_entities = WD.get('remove_entities')
         if remove_entities then
             c = c + 1
-            position = WD.get('spawn_position')
-            remove_trees({surface = surface, position = position, valid = true})
-            remove_rocks({surface = surface, position = position, valid = true})
-            fill_tiles({surface = surface, position = position, valid = true})
+            valid_position = WD.get('spawn_position')
+            debug_print(serpent.block('valid_position - x:' .. valid_position.x .. ' y:' .. valid_position.y))
+            remove_trees({surface = surface, position = valid_position, valid = true})
+            remove_rocks({surface = surface, position = valid_position, valid = true})
+            fill_tiles({surface = surface, position = valid_position, valid = true})
             WD.set('spot', 'nil')
             if c == 5 then
                 return debug_print('get_spawn_pos - we could not find a spawning pos?')
@@ -202,7 +209,9 @@ local function get_spawn_pos()
         end
     end
 
-    return position
+    debug_print(serpent.block('valid_position - x:' .. valid_position.x .. ' y:' .. valid_position.y))
+
+    return valid_position
 end
 
 local function is_unit_valid(biter)
@@ -462,7 +471,7 @@ local function spawn_biter(surface, is_boss_biter)
 
     if increase_health_per_wave and not is_boss_biter then
         local modified_unit_health = WD.get('modified_unit_health')
-        BiterHealthBooster.add_unit(biter, modified_unit_health)
+        BiterHealthBooster.add_unit(biter, modified_unit_health.current_value)
     end
 
     if is_boss_biter then
@@ -503,12 +512,17 @@ local function increase_biter_damage()
     end
 
     local e = game.forces.enemy
-    local new = Difficulty.get().difficulty_vote_value * 0.08
+    local new = Difficulty.get().difficulty_vote_value * 0.04
+    local melee = new
+    local bio = new - 0.02
     local e_old_melee = e.get_ammo_damage_modifier('melee')
     local e_old_biological = e.get_ammo_damage_modifier('biological')
 
-    e.set_ammo_damage_modifier('melee', new + e_old_melee)
-    e.set_ammo_damage_modifier('biological', new + e_old_biological)
+    debug_print('Melee: ' .. melee + e_old_melee)
+    debug_print('Biological: ' .. bio + e_old_biological)
+
+    e.set_ammo_damage_modifier('melee', melee + e_old_melee)
+    e.set_ammo_damage_modifier('biological', bio + e_old_biological)
 end
 
 local function increase_biters_health()
@@ -522,21 +536,21 @@ local function increase_biters_health()
 
     -- this sets normal units health
     local modified_unit_health = WD.get('modified_unit_health')
-    if modified_unit_health > 30 then
-        modified_unit_health = 30
+    if modified_unit_health.current_value > modified_unit_health.limit_value then
+        modified_unit_health.current_value = modified_unit_health.limit_value
     end
-    debug_print('[HEALTHBOOSTER] > Normal Units Health Boosted: ' .. modified_unit_health)
-    WD.set('modified_unit_health', modified_unit_health + 0.02)
+    debug_print('[HEALTHBOOSTER] > Normal Units Health Boosted: ' .. modified_unit_health.current_value)
+    WD.set('modified_unit_health').current_value = modified_unit_health.current_value + modified_unit_health.health_increase_per_boss_wave
 
     -- this sets boss units health
     if boosted_health == 1 then
-        boosted_health = 1.20
+        boosted_health = 1.25
     end
-    boosted_health = boosted_health * (wave_number * 0.03)
-    local sum = boosted_health * 4
+    boosted_health = boosted_health * (wave_number * 0.04)
+    local sum = boosted_health * 5
     debug_print('[HEALTHBOOSTER] > Boss Health Boosted: ' .. sum)
-    if sum >= 100 then
-        sum = 100
+    if sum >= 300 then
+        sum = 300
     end
 
     WD.set('modified_boss_unit_health', sum)

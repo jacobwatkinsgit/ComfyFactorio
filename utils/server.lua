@@ -35,6 +35,10 @@ Global.register(
     end
 )
 
+--- Jail dataset.
+local jailed_data_set = 'jailed'
+
+--- Web panel framework.
 local discord_tag = '[DISCORD]'
 local discord_raw_tag = '[DISCORD-RAW]'
 local discord_bold_tag = '[DISCORD-BOLD]'
@@ -46,6 +50,11 @@ local discord_embed_tag = '[DISCORD-EMBED]'
 local discord_embed_raw_tag = '[DISCORD-EMBED-RAW]'
 local discord_admin_embed_tag = '[DISCORD-ADMIN-EMBED]'
 local discord_admin_embed_raw_tag = '[DISCORD-ADMIN-EMBED-RAW]'
+local discord_named_tag = '[DISCORD-NAMED]'
+local discord_named_raw_tag = '[DISCORD-NAMED-RAW]'
+local discord_named_bold_tag = '[DISCORD-NAMED-BOLD]'
+local discord_named_embed_tag = '[DISCORD-NAMED-EMBED]'
+local discord_named_embed_raw_tag = '[DISCORD-NAMED-EMBED-RAW]'
 local start_scenario_tag = '[START-SCENARIO]'
 local stop_scenario_tag = '[STOP-SCENARIO]'
 local ping_tag = '[PING]'
@@ -62,6 +71,20 @@ local player_leave_tag = '[PLAYER-LEAVE]'
 Public.raw_print = raw_print
 
 local data_set_handlers = {}
+
+local function assert_non_empty_string_and_no_spaces(str, argument_name)
+    if type(str) ~= 'string' then
+        error(argument_name .. ' must be a string', 3)
+    end
+
+    if #str == 0 then
+        error(argument_name .. ' must not be an empty string', 3)
+    end
+
+    if str:match(' ') then
+        error(argument_name .. " must not contain space ' ' character.", 3)
+    end
+end
 
 --- The event id for the on_server_started event.
 -- The event is raised whenever the server goes from the starting state to the running state.
@@ -111,6 +134,41 @@ function Public.to_discord_bold(message, locale)
     else
         raw_print(discord_bold_tag .. message)
     end
+end
+
+--- Sends a message to the named discord channel. The message is sanitized of markdown server side.
+-- @param  message<string> message to send.
+function Public.to_discord_named(channel_name, message)
+    assert_non_empty_string_and_no_spaces(channel_name, 'channel_name')
+    raw_print(concat({discord_named_tag, channel_name, ' ', message}))
+end
+
+--- Sends a message to the named discord channel. The message is not sanitized of markdown.
+-- @param  message<string> message to send.
+function Public.to_discord_named_raw(channel_name, message)
+    assert_non_empty_string_and_no_spaces(channel_name, 'channel_name')
+    raw_print(concat({discord_named_raw_tag, channel_name, ' ', message}))
+end
+
+--- Sends a message to the named discord channel. The message is sanitized of markdown server side, then made bold.
+-- @param  message<string> message to send.
+function Public.to_discord_named_bold(channel_name, message)
+    assert_non_empty_string_and_no_spaces(channel_name, 'channel_name')
+    raw_print(concat({discord_named_bold_tag, channel_name, ' ', message}))
+end
+
+--- Sends an embed message to the named discord channel. The message is sanitized of markdown server side.
+-- @param  message<string> the content of the embed.
+function Public.to_discord_named_embed(channel_name, message)
+    assert_non_empty_string_and_no_spaces(channel_name, 'channel_name')
+    raw_print(concat({discord_named_embed_tag, channel_name, ' ', message}))
+end
+
+--- Sends an embed message to the named discord channel. The message is not sanitized of markdown.
+-- @param  message<string> the content of the embed.
+function Public.to_discord_named_embed_raw(channel_name, message)
+    assert_non_empty_string_and_no_spaces(channel_name, 'channel_name')
+    raw_print(concat({discord_named_embed_raw_tag, channel_name, ' ', message}))
 end
 
 --- Sends a message to the linked admin discord channel. The message is sanitized of markdown server side.
@@ -918,6 +976,7 @@ Event.add(
             return
         end
         if cmd == 'ban' then
+            Public.set_data(jailed_data_set, player.name, nil) -- this is added here since we don't want to clutter the jail dataset.
             if player then
                 Public.to_banned_embed(table.concat {player.name .. ' banned ' .. reason})
                 return
